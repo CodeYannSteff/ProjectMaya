@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Case File: MAYA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --term-green: #4af626;
+            --term-blue: #22c4ea;
+            --term-bg: #0a0a0a;
+            --term-red: #ff3333;
+        }
+
+        body {
+            background-color: #050505;
+            color: var(--term-green);
+            font-family: 'VT323', monospace;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-font-smoothing: none;
+            height: 100dvh;
+            /* Mobile viewport fix */
+            width: 100vw;
+        }
+
+        /* --- VISUAL EFFECTS --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0),
+                    rgba(255, 255, 255, 0) 50%,
+                    rgba(0, 0, 0, 0.2) 50%,
+                    rgba(0, 0, 0, 0.2));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .glow-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(34, 196, 234, 0.05) 0%, rgba(0, 0, 0, 0.8) 90%);
+            pointer-events: none;
+            z-index: 49;
+        }
+
+        /* Glitch Animation for global effect */
+        @keyframes glitch-skew {
+            0% {
+                transform: skew(0deg);
+            }
+
+            20% {
+                transform: skew(-2deg);
+            }
+
+            40% {
+                transform: skew(2deg);
+            }
+
+            60% {
+                transform: skew(-1deg);
+            }
+
+            80% {
+                transform: skew(1deg);
+            }
+
+            100% {
+                transform: skew(0deg);
+            }
+        }
+
+        .glitch-active {
+            animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+            filter: hue-rotate(90deg);
+        }
+
+        /* --- UI ELEMENTS --- */
+        .pixel-border {
+            border: 4px solid var(--term-green);
+            box-shadow:
+                -4px 0 0 0 black,
+                4px 0 0 0 black,
+                0 -4px 0 0 black,
+                0 4px 0 0 black;
+            image-rendering: pixelated;
+        }
+
+        .window {
+            background-color: #0a0a0a;
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            width: 90%;
+            max-width: 500px;
+            /* Center positioning logic handled in CSS for better mobile support */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.8);
+            max-height: 80vh;
+            /* Prevent overflow on small screens */
+        }
+
+        .window-header {
+            background-color: var(--term-green);
+            color: black;
+            padding: 8px 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* Larger close button for touch */
+        .close-btn {
+            padding: 5px 10px;
+            background: black;
+            color: var(--term-green);
+            border: none;
+            cursor: pointer;
+            font-family: 'VT323';
+            font-weight: bold;
+        }
+
+        .window-body {
+            padding: 15px;
+            border: 2px solid var(--term-green);
+            border-top: none;
+            overflow-y: auto;
+            /* Scrollable content */
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .desktop-icon {
+            width: 85px;
+            text-align: center;
+            cursor: pointer;
+            margin: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.1s;
+        }
+
+        .desktop-icon:active {
+            transform: scale(0.95);
+        }
+
+        .desktop-icon i {
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+            filter: drop-shadow(2px 2px 0px #000);
+        }
+
+        .desktop-icon span {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 4px 6px;
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+
+        /* --- GAME SPECIFIC --- */
+        .btn-pixel {
+            background: transparent;
+            border: 2px solid var(--term-green);
+            color: var(--term-green);
+            padding: 12px;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-pixel:hover {
+            background: var(--term-green);
+            color: black;
+        }
+
+        .btn-pixel:active {
+            transform: translateY(2px);
+        }
+
+        .hidden-rabbit {
+            position: absolute;
+            /* Changed from fixed to absolute within desktop */
+            font-size: 28px;
+            /* Slightly larger */
+            color: #333;
+            /* Lighter gray for better visibility on mobile */
+            cursor: pointer;
+            z-index: 10;
+            padding: 25px;
+            /* Even larger touch target */
+            text-shadow: 0 0 2px rgba(255, 255, 255, 0.15);
+            /* Subtle hint glow */
+            transition: color 0.3s, transform 0.1s;
+        }
+
+        .hidden-rabbit:active {
+            transform: scale(0.9);
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translate(-51%, -51%) rotate(0deg);
+            }
+
+            /* Adjusted for centered translate */
+            20% {
+                transform: translate(-53%, -50%) rotate(1deg);
+            }
+
+            40% {
+                transform: translate(-49%, -51%) rotate(-1deg);
+            }
+
+            60% {
+                transform: translate(-53%, -51%) rotate(0deg);
+            }
+
+            80% {
+                transform: translate(-49%, -49%) rotate(1deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+        }
+
+        /* Fake Crash Overlay */
+        #bsod {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0000aa;
+            /* Classic Blue */
+            color: white;
+            z-index: 100;
+            padding: 40px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            animation: fall linear forwards;
+            z-index: 60;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+            }
+        }
+
+        /* Loading Bar */
+        .loader {
+            border: 2px solid var(--term-green);
+            height: 20px;
+            width: 100%;
+            position: relative;
+        }
+
+        .loader-fill {
+            background: var(--term-green);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Input styling */
+        input::placeholder {
+            color: #004400;
+        }
+
+        /* Theme Overrides */
+        .theme-blue {
+            border-color: var(--term-blue) !important;
+            color: var(--term-blue) !important;
+        }
+
+        .bg-blue-custom {
+            background-color: var(--term-blue) !important;
+        }
+    </style>
+</head>
+
+<body onclick="maybeGlitch()">
+
+    <div class="scanlines"></div>
+    <div class="glow-overlay"></div>
+
+    <!-- BSOD Overlay -->
+    <div id="bsod">
+        <p>A fatal exception 0E has occurred at 0028:C0034B23.</p>
+        <p>The current application will be terminated.</p>
+        <br>
+        <p>* Press any key to terminate.</p>
+        <p>* But you can't terminate Maya's awesomeness.</p>
+        <br>
+        <p style="text-align: center; margin-top: 50px; font-size: 50px;">:(</p>
+        <p style="text-align: center; margin-top: 20px;" id="bsod-msg">REBOOTING WITH LOVE...</p>
+    </div>
+
+    <!-- DESKTOP AREA -->
+    <div id="desktop" class="w-full h-full p-4 flex flex-wrap content-start relative">
+
+        <!-- Icon 1: Lore Files -->
+        <div class="desktop-icon text-yellow-500" onclick="openWindow('window-lore')">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>CASE_FILES</span>
+        </div>
+
+        <!-- Icon 2: Decrypt Tool -->
+        <div class="desktop-icon text-green-500" onclick="openWindow('window-decrypt')">
+            <i class="fa-solid fa-terminal"></i>
+            <span>DECRYPT.EXE</span>
+        </div>
+
+        <!-- Icon 3: DANGER (Easter Egg) -->
+        <div class="desktop-icon text-red-600" onclick="triggerCrash()">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>DO_NOT_OPEN</span>
+        </div>
+
+        <!-- Icon 4: The Target (Locked) -->
+        <div class="desktop-icon text-red-500 opacity-80" id="icon-target" onclick="tryOpenTarget()">
+            <i class="fa-solid fa-lock"></i>
+            <span>BIRTHDAY.BAT</span>
+        </div>
+
+        <!-- Hidden Icon: Rabbit (Randomly placed via JS) -->
+        <div id="desktop-rabbit" class="hidden-rabbit" onclick="foundRabbit()">
+            <i class="fa-solid fa-paw"></i>
+            <span style="font-size: 12px; display: none;">Found me!</span>
+        </div>
+
+    </div>
+
+
+    <!-- WINDOW: LORE FILES -->
+    <div id="window-lore" class="window pixel-border">
+        <div class="window-header">
+            <span>CASE_FILES / MAYA</span>
+            <button class="close-btn" onclick="closeWindow('window-lore')">X</button>
+        </div>
+        <div class="window-body">
+            <p class="mb-4">> SUBJECT: Maya</p>
+            <p class="mb-4">> AESTHETIC: Dark Academia. Fond of mystery novels, rain, and old libraries.</p>
+            <p class="mb-4 text-blue-400">> NOTE #1: Subject shows high aptitude for CALCULUS. The key to the first lock
+                is the next number in this sequence: 1, 1, 2, 3, 5, ...</p>
+            <p class="mb-4 text-pink-400">> NOTE #2: Subject enjoys "Adventure Time". Who is the magical dog?</p>
+            <div class="border-t border-gray-700 mt-4 pt-2 text-xs text-gray-500">
+                End of file.
+            </div>
+        </div>
+    </div>
+
+
+    <!-- WINDOW: DECRYPTION TOOL -->
+    <div id="window-decrypt" class="window pixel-border">
+        <div class="window-header">
+            <span>DECRYPT.EXE</span>
+            <button class="close-btn" onclick="closeWindow('window-decrypt')">X</button>
+        </div>
+        <div class="window-body text-center">
+            <p class="mb-4">SYSTEM LOCKED. 3 KEYS REQUIRED.</p>
+
+            <div class="mb-4 text-left border border-gray-800 p-2">
+                <p>KEY 1 [MATH]: <span id="status-1" class="text-red-500">LOCKED</span></p>
+                <p>KEY 2 [LORE]: <span id="status-2" class="text-red-500">LOCKED</span></p>
+                <p>KEY 3 [SEEK]: <span id="status-3" class="text-red-500">LOCKED</span></p>
+            </div>
+
+            <div id="puzzle-area">
+                <p id="puzzle-prompt" class="text-yellow-400 mb-2">Initialize Key 1 sequence?</p>
+                <!-- autocomplete off to prevent keyboard covering input history -->
+                <input type="text" id="puzzle-input" autocomplete="off"
+                    class="bg-black border border-green-500 p-3 text-green-500 w-full font-mono uppercase mb-2 outline-none"
+                    placeholder="ENTER CODE">
+                <button class="btn-pixel" onclick="submitPuzzle()">EXECUTE</button>
+            </div>
+
+            <p id="error-msg" class="text-red-500 mt-2 hidden">ACCESS DENIED.</p>
+        </div>
+    </div>
+
+
+    <!-- WINDOW: LOADING (Reused Victory Window Structure) -->
+    <div id="window-victory" class="window pixel-border theme-blue" style="border-color: #22c4ea;">
+        <div class="window-header bg-blue-custom text-white" style="background-color: #22c4ea;">
+            <span>BIRTHDAY.BAT - EXECUTING...</span>
+            <button class="close-btn" style="color:white" onclick="closeWindow('window-victory')">X</button>
+        </div>
+        <div class="window-body text-center" style="border-color: #22c4ea;">
+            <div class="loader mb-4" style="border-color: #22c4ea;">
+                <div class="loader-fill bg-blue-custom"
+                    style="width: 0%; background-color: #22c4ea; transition: width 2s;"></div>
+            </div>
+            <p>INITIALIZING SEQUENCE...</p>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        const state = {
+            key1: false, // Math
+            key2: false, // Jake
+            key3: false, // Rabbit
+            currentPuzzle: 1
+        };
+
+        // --- INIT ---
+        window.onload = function () {
+            placeRabbitRandomly();
+        }
+
+        // --- MOBILE FRIENDLY WINDOWS ---
+        function openWindow(id) {
+            // Close others
+            document.querySelectorAll('.window').forEach(w => w.style.display = 'none');
+
+            const win = document.getElementById(id);
+            win.style.display = 'flex';
+
+            // Mobile Keyboard Handling: Scroll to top of window
+            win.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            if (id === 'window-decrypt') {
+                updateDecryptUI();
+                // Auto focus input for convenience
+                setTimeout(() => document.getElementById('puzzle-input').focus(), 100);
+            }
+        }
+
+        function closeWindow(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // --- PUZZLE LOGIC ---
+        function updateDecryptUI() {
+            const prompt = document.getElementById('puzzle-prompt');
+            const input = document.getElementById('puzzle-input');
+            const status1 = document.getElementById('status-1');
+            const status2 = document.getElementById('status-2');
+            const status3 = document.getElementById('status-3');
+
+            // Update Status Text
+            status1.innerText = state.key1 ? "DECRYPTED" : "LOCKED";
+            status1.className = state.key1 ? "text-green-500" : "text-red-500";
+
+            status2.innerText = state.key2 ? "DECRYPTED" : "LOCKED";
+            status2.className = state.key2 ? "text-green-500" : "text-red-500";
+
+            status3.innerText = state.key3 ? "DECRYPTED" : "LOCKED";
+            status3.className = state.key3 ? "text-green-500" : "text-red-500";
+
+            // Determine current active puzzle
+            if (!state.key1) {
+                state.currentPuzzle = 1;
+                prompt.innerText = "INPUT MISSING SEQUENCE (1, 1, 2, 3, 5, ?):";
+                input.placeholder = "NUMBER";
+                input.value = "";
+                input.disabled = false;
+            } else if (!state.key2) {
+                state.currentPuzzle = 2;
+                prompt.innerText = "WHO IS FINN'S BEST FRIEND?";
+                input.placeholder = "NAME";
+                input.value = "";
+                input.disabled = false;
+            } else if (!state.key3) {
+                state.currentPuzzle = 3;
+                prompt.innerText = "SEARCH THE DESKTOP FOR THE HIDDEN ANIMAL.";
+                input.placeholder = "SCANNING...";
+                input.disabled = true;
+            } else {
+                prompt.innerText = "ALL KEYS ACQUIRED. UNLOCK READY.";
+                input.style.display = 'none';
+                document.querySelector('#window-decrypt .btn-pixel').innerText = "UNLOCK BIRTHDAY.BAT";
+            }
+        }
+
+        function submitPuzzle() {
+            const input = document.getElementById('puzzle-input');
+            const val = input.value.trim().toLowerCase();
+            const error = document.getElementById('error-msg');
+            const win = document.getElementById('window-decrypt');
+
+            error.classList.add('hidden');
+
+            if (state.key1 && state.key2 && state.key3) {
+                closeWindow('window-decrypt');
+                triggerVictory();
+                return;
+            }
+
+            // --- CHEAT CODES ---
+            if (val === 'blue') {
+                alert("CHEAT CODE ACCEPTED: Color Protocol Bypass.");
+                state.key1 = true;
+                state.key2 = true;
+                flashSuccess();
+                return;
+            }
+            if (val === 'adventure') {
+                alert("CHEAT CODE ACCEPTED: Mathematical!");
+                state.key2 = true;
+                flashSuccess();
+                return;
+            }
+
+            // Normal logic
+            if (state.currentPuzzle === 1) {
+                if (val === '8') {
+                    state.key1 = true;
+                    flashSuccess();
+                } else {
+                    triggerError("INCORRECT SEQUENCE");
+                }
+            } else if (state.currentPuzzle === 2) {
+                if (val === 'jake' || val === 'jake the dog') {
+                    state.key2 = true;
+                    flashSuccess();
+                } else {
+                    triggerError("UNKNOWN ENTITY");
+                }
+            }
+        }
+
+        function triggerError(msg) {
+            const error = document.getElementById('error-msg');
+            if (msg) error.innerText = msg;
+            error.classList.remove('hidden');
+            const win = document.getElementById('window-decrypt');
+            win.classList.add('shake');
+            setTimeout(() => win.classList.remove('shake'), 500);
+        }
+
+        function flashSuccess() {
+            updateDecryptUI();
+            const body = document.querySelector('#window-decrypt .window-body');
+            body.style.backgroundColor = '#1a2e1a';
+            setTimeout(() => body.style.backgroundColor = '', 200);
+        }
+
+        // --- RABBIT PUZZLE (RANDOM POSITION) ---
+        function placeRabbitRandomly() {
+            const r = document.getElementById('desktop-rabbit');
+            // Safe zone calculation (padding from edges)
+            const x = Math.floor(Math.random() * (window.innerWidth - 100)) + 20;
+            const y = Math.floor(Math.random() * (window.innerHeight - 200)) + 100; // Avoid top icons
+
+            r.style.left = x + 'px';
+            r.style.top = y + 'px';
+        }
+
+        function foundRabbit() {
+            if (!state.key3) {
+                state.key3 = true;
+                alert("SYSTEM ALERT: Hidden Lagomorph Detected. Key 3 Acquired.");
+
+                const r = document.getElementById('desktop-rabbit');
+                r.style.color = '#fff';
+                r.querySelector('i').classList.add('fa-rabbit');
+                r.querySelector('i').classList.remove('fa-paw');
+
+                if (document.getElementById('window-decrypt').style.display !== 'none') {
+                    updateDecryptUI();
+                }
+            } else {
+                // If clicked again, it jumps!
+                placeRabbitRandomly();
+            }
+        }
+
+        // --- DANGER / CRASH EASTER EGG ---
+        function triggerCrash() {
+            const bsod = document.getElementById('bsod');
+            bsod.style.display = 'block';
+            // Reset to classic BSOD style
+            bsod.style.background = '#0000aa';
+            bsod.style.display = 'block';
+            bsod.style.flexDirection = 'initial';
+            bsod.style.justifyContent = 'initial';
+            bsod.style.alignItems = 'initial';
+            bsod.style.textAlign = 'left';
+
+            bsod.innerHTML = `
+                <p>A fatal exception 0E has occurred at 0028:C0034B23.</p>
+                <p>The current application will be terminated.</p>
+                <br>
+                <p>* Press any key to terminate.</p>
+                <p>* But you can't terminate Maya's awesomeness.</p>
+                <br>
+                <p style="text-align: center; margin-top: 50px; font-size: 50px;">:(</p>
+                <p style="text-align: center; margin-top: 20px;">REBOOTING WITH LOVE...</p>
+            `;
+
+            setTimeout(() => {
+                bsod.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; flex-direction:column;">' +
+                    '<i class="fa-solid fa-heart fa-bounce" style="font-size: 80px; color: red;"></i>' +
+                    '<h1 style="margin-top:20px;">JUST KIDDING!</h1></div>';
+                setTimeout(() => {
+                    bsod.style.display = 'none';
+                    bsod.innerHTML = '';
+                }, 2000);
+            }, 3000);
+        }
+
+        // --- GLITCH EFFECT ---
+        function maybeGlitch() {
+            // Random chance to glitch screen on click
+            if (Math.random() > 0.7) {
+                document.body.classList.add('glitch-active');
+                setTimeout(() => document.body.classList.remove('glitch-active'), 200);
+            }
+        }
+
+        function tryOpenTarget() {
+            if (state.key1 && state.key2 && state.key3) {
+                triggerVictory();
+            } else {
+                alert("ACCESS DENIED: Decrypt all 3 keys first.");
+                openWindow('window-decrypt');
+            }
+        }
+
+        // --- NEW VICTORY SEQUENCE ---
+        function triggerVictory() {
+            // 1. Icon Feedback
+            document.getElementById('icon-target').classList.remove('opacity-80', 'text-red-500');
+            document.getElementById('icon-target').classList.add('text-blue-400', 'animate-pulse');
+            document.getElementById('icon-target').querySelector('i').className = "fa-solid fa-cake-candles";
+
+            // 2. Open Loading Window
+            const win = document.getElementById('window-victory');
+            openWindow('window-victory');
+
+            // Start Loading Bar animation
+            setTimeout(() => {
+                win.querySelector('.loader-fill').style.width = '100%';
+            }, 100);
+
+            // 3. Trigger Love BSOD after delay
+            setTimeout(() => {
+                closeWindow('window-victory');
+                triggerLoveBSOD();
+            }, 2500);
+        }
+
+        function triggerLoveBSOD() {
+            const bsod = document.getElementById('bsod');
+
+            // Reset styles for center layout
+            bsod.style.display = 'flex';
+            bsod.style.flexDirection = 'column';
+            bsod.style.justifyContent = 'center';
+            bsod.style.alignItems = 'center';
+            bsod.style.background = '#22c4ea'; // Adventure Time Blue
+            bsod.style.textAlign = 'center';
+            bsod.style.zIndex = '9999';
+
+            // Content
+            bsod.innerHTML = `
+                <div class="animate-bounce mb-8">
+                    <i class="fa-solid fa-heart text-red-500" style="font-size: 80px; filter: drop-shadow(4px 4px 0 #000);"></i>
+                </div>
+                <h1 class="text-3xl md:text-5xl font-bold mb-6 text-white" style="font-family: 'Press Start 2P'; text-shadow: 4px 4px 0 #000; line-height: 1.5;">HAPPY BIRTHDAY MAYA!</h1>
+                
+                <div class="max-w-2xl bg-white text-black p-6 rounded-lg pixel-border mx-4" style="font-family: 'VT323'; font-size: 1.3rem; box-shadow: 8px 8px 0 rgba(0,0,0,0.5);">
+                    <p class="mb-2 text-red-600 font-bold">ERROR: SYSTEM OVERLOADED WITH LOVE</p>
+                    <p class="mb-4 text-xs text-gray-500">CODE: LORE_DETECTIVE_SUCCESS</p>
+                    <hr class="border-black mb-4">
+                    <p class="mb-2">To our favorite mystery-solving, math-loving, dark academia protagonist:</p>
+                    <p class="mb-2">May your year be filled with thrillers that keep you guessing and variables that always solve for X.</p>
+                    <p>You are truly one of a kind.</p>
+                    <div class="mt-4 text-center text-3xl">
+                        🎂 🐇 📘
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-white text-xs md:text-sm animate-pulse">
+                    [ CLICK ANYWHERE TO RESTART SIMULATION ]
+                </div>
+            `;
+
+            // Add click listener to reload
+            bsod.onclick = () => window.location.reload();
+
+            startConfetti();
+        }
+
+        function startConfetti() {
+            const colors = ['#feca34', '#22c4ea', '#ffffff', '#ff0000'];
+            // Reduce confetti count for mobile performance
+            const limit = window.innerWidth < 600 ? 50 : 100;
+            let count = 0;
+
+            const interval = setInterval(() => {
+                if (count > limit) { clearInterval(interval); return; }
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 4000);
+                count++;
+            }, 100);
+        }
+
+    </script>
+</body>
+
+</html>
