@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Case File: MAYA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -27,8 +28,13 @@
             user-select: none;
             -webkit-font-smoothing: none;
             height: 100dvh;
-            /* Mobile viewport fix */
+            /* Dynamic viewport height for mobile */
             width: 100vw;
+            /* Handle safe areas for notches */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
         /* --- VISUAL EFFECTS --- */
@@ -59,7 +65,7 @@
             z-index: 49;
         }
 
-        /* Glitch Animation for global effect */
+        /* Glitch Animation */
         @keyframes glitch-skew {
             0% {
                 transform: skew(0deg);
@@ -107,16 +113,16 @@
             position: absolute;
             display: none;
             flex-direction: column;
-            width: 90%;
+            width: 92%;
+            /* Slightly wider on mobile */
             max-width: 500px;
-            /* Center positioning logic handled in CSS for better mobile support */
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 20;
             box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.8);
-            max-height: 80vh;
-            /* Prevent overflow on small screens */
+            max-height: 85dvh;
+            /* Leave room for mobile bars */
         }
 
         .window-header {
@@ -129,17 +135,20 @@
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
+            /* Prevents header from squishing */
         }
 
-        /* Larger close button for touch */
+        /* Larger touch target for Close Button */
         .close-btn {
-            padding: 5px 10px;
+            padding: 10px 15px;
             background: black;
             color: var(--term-green);
             border: none;
             cursor: pointer;
             font-family: 'VT323';
             font-weight: bold;
+            font-size: 1.2rem;
+            margin-left: 10px;
         }
 
         .window-body {
@@ -147,30 +156,37 @@
             border: 2px solid var(--term-green);
             border-top: none;
             overflow-y: auto;
-            /* Scrollable content */
+            /* Enable scrolling */
+            -webkit-overflow-scrolling: touch;
+            /* Smooth scroll on iOS */
             color: white;
             font-size: 1.1rem;
+            flex-grow: 1;
+            /* Fills remaining space */
+            min-height: 0;
+            /* Flexbox scrolling fix */
         }
 
         .desktop-icon {
-            width: 85px;
+            width: 80px;
             text-align: center;
             cursor: pointer;
-            margin: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             transition: transform 0.1s;
+            /* Removed fixed margins, using flex gap instead */
         }
 
         .desktop-icon:active {
-            transform: scale(0.95);
+            transform: scale(0.90);
+            opacity: 0.8;
         }
 
         .desktop-icon i {
-            font-size: 2.8rem;
+            font-size: 3rem;
             margin-bottom: 8px;
-            filter: drop-shadow(2px 2px 0px #000);
+            filter: drop-shadow(3px 3px 0px #000);
         }
 
         .desktop-icon span {
@@ -178,6 +194,7 @@
             padding: 4px 6px;
             font-size: 0.9rem;
             line-height: 1;
+            border-radius: 2px;
         }
 
         /* --- GAME SPECIFIC --- */
@@ -185,41 +202,38 @@
             background: transparent;
             border: 2px solid var(--term-green);
             color: var(--term-green);
-            padding: 12px;
+            padding: 15px;
+            /* Larger touch target */
             font-family: 'VT323', monospace;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
             width: 100%;
         }
 
-        .btn-pixel:hover {
+        .btn-pixel:active {
             background: var(--term-green);
             color: black;
-        }
-
-        .btn-pixel:active {
             transform: translateY(2px);
         }
 
         .hidden-rabbit {
             position: absolute;
-            /* Changed from fixed to absolute within desktop */
             font-size: 28px;
-            /* Slightly larger */
             color: #333;
-            /* Lighter gray for better visibility on mobile */
             cursor: pointer;
             z-index: 10;
-            padding: 25px;
-            /* Even larger touch target */
+            padding: 30px;
+            /* Huge touch target */
+            margin: -30px;
+            /* Offset padding so click center is icon */
             text-shadow: 0 0 2px rgba(255, 255, 255, 0.15);
-            /* Subtle hint glow */
             transition: color 0.3s, transform 0.1s;
         }
 
         .hidden-rabbit:active {
-            transform: scale(0.9);
+            transform: scale(1.2);
+            color: white;
         }
 
         .shake {
@@ -231,7 +245,6 @@
                 transform: translate(-51%, -51%) rotate(0deg);
             }
 
-            /* Adjusted for centered translate */
             20% {
                 transform: translate(-53%, -50%) rotate(1deg);
             }
@@ -262,12 +275,12 @@
             width: 100%;
             height: 100%;
             background: #0000aa;
-            /* Classic Blue */
             color: white;
             z-index: 100;
-            padding: 40px;
+            padding: 20px;
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
+            overflow-y: auto;
         }
 
         /* Confetti */
@@ -278,6 +291,7 @@
             background: white;
             animation: fall linear forwards;
             z-index: 60;
+            pointer-events: none;
         }
 
         @keyframes fall {
@@ -289,7 +303,7 @@
         /* Loading Bar */
         .loader {
             border: 2px solid var(--term-green);
-            height: 20px;
+            height: 25px;
             width: 100%;
             position: relative;
         }
@@ -336,7 +350,8 @@
     </div>
 
     <!-- DESKTOP AREA -->
-    <div id="desktop" class="w-full h-full p-4 flex flex-wrap content-start relative">
+    <!-- Added gap-4 for better icon spacing on mobile -->
+    <div id="desktop" class="w-full h-full p-4 flex flex-wrap content-start gap-6 relative">
 
         <!-- Icon 1: Lore Files -->
         <div class="desktop-icon text-yellow-500" onclick="openWindow('window-lore')">
@@ -378,7 +393,7 @@
             <button class="close-btn" onclick="closeWindow('window-lore')">X</button>
         </div>
         <div class="window-body">
-            <p class="mb-4">> SUBJECT: Maya</p>
+            <p class="mb-4 text-yellow-300">> SUBJECT: Maya</p>
             <p class="mb-4">> AESTHETIC: Dark Academia. Fond of mystery novels, rain, and old libraries.</p>
             <p class="mb-4 text-blue-400">> NOTE #1: Subject shows high aptitude for CALCULUS. The key to the first lock
                 is the next number in this sequence: 1, 1, 2, 3, 5, ...</p>
@@ -386,6 +401,8 @@
             <div class="border-t border-gray-700 mt-4 pt-2 text-xs text-gray-500">
                 End of file.
             </div>
+            <!-- Added spacer for scrolling on mobile -->
+            <div class="h-4"></div>
         </div>
     </div>
 
@@ -399,7 +416,7 @@
         <div class="window-body text-center">
             <p class="mb-4">SYSTEM LOCKED. 3 KEYS REQUIRED.</p>
 
-            <div class="mb-4 text-left border border-gray-800 p-2">
+            <div class="mb-4 text-left border border-gray-800 p-2 text-sm md:text-base">
                 <p>KEY 1 [MATH]: <span id="status-1" class="text-red-500">LOCKED</span></p>
                 <p>KEY 2 [LORE]: <span id="status-2" class="text-red-500">LOCKED</span></p>
                 <p>KEY 3 [SEEK]: <span id="status-3" class="text-red-500">LOCKED</span></p>
@@ -407,14 +424,22 @@
 
             <div id="puzzle-area">
                 <p id="puzzle-prompt" class="text-yellow-400 mb-2">Initialize Key 1 sequence?</p>
-                <!-- autocomplete off to prevent keyboard covering input history -->
-                <input type="text" id="puzzle-input" autocomplete="off"
-                    class="bg-black border border-green-500 p-3 text-green-500 w-full font-mono uppercase mb-2 outline-none"
+
+                <!-- 
+                   MOBILE OPTIMIZATION FOR INPUT:
+                   - text-[16px]: Prevents iOS auto-zoom on focus
+                   - autocomplete/correct/capitalize off: Prevents keyboard interference 
+                -->
+                <input type="text" id="puzzle-input" autocomplete="off" autocorrect="off" autocapitalize="off"
+                    spellcheck="false"
+                    class="bg-black border border-green-500 p-3 text-green-500 w-full font-mono uppercase mb-2 outline-none text-[16px] rounded-none"
                     placeholder="ENTER CODE">
+
                 <button class="btn-pixel" onclick="submitPuzzle()">EXECUTE</button>
             </div>
 
             <p id="error-msg" class="text-red-500 mt-2 hidden">ACCESS DENIED.</p>
+            <div class="h-4"></div>
         </div>
     </div>
 
@@ -446,6 +471,10 @@
         // --- INIT ---
         window.onload = function () {
             placeRabbitRandomly();
+            // Prevent double-tap zoom
+            document.addEventListener('dblclick', function (event) {
+                event.preventDefault();
+            }, { passive: false });
         }
 
         // --- MOBILE FRIENDLY WINDOWS ---
@@ -456,13 +485,15 @@
             const win = document.getElementById(id);
             win.style.display = 'flex';
 
-            // Mobile Keyboard Handling: Scroll to top of window
-            win.scrollIntoView({ behavior: "smooth", block: "center" });
-
             if (id === 'window-decrypt') {
                 updateDecryptUI();
-                // Auto focus input for convenience
-                setTimeout(() => document.getElementById('puzzle-input').focus(), 100);
+                // Focusing on mobile often brings up keyboard which resizes view
+                // We delay slightly to ensure transition is smooth
+                setTimeout(() => {
+                    const input = document.getElementById('puzzle-input');
+                    // Only focus if we aren't in the "scan" phase
+                    if (!input.disabled) input.focus();
+                }, 300);
             }
         }
 
@@ -495,17 +526,20 @@
                 input.placeholder = "NUMBER";
                 input.value = "";
                 input.disabled = false;
+                input.style.display = 'block';
             } else if (!state.key2) {
                 state.currentPuzzle = 2;
                 prompt.innerText = "WHO IS FINN'S BEST FRIEND?";
                 input.placeholder = "NAME";
                 input.value = "";
                 input.disabled = false;
+                input.style.display = 'block';
             } else if (!state.key3) {
                 state.currentPuzzle = 3;
                 prompt.innerText = "SEARCH THE DESKTOP FOR THE HIDDEN ANIMAL.";
                 input.placeholder = "SCANNING...";
                 input.disabled = true;
+                input.style.display = 'block';
             } else {
                 prompt.innerText = "ALL KEYS ACQUIRED. UNLOCK READY.";
                 input.style.display = 'none';
@@ -579,9 +613,15 @@
         // --- RABBIT PUZZLE (RANDOM POSITION) ---
         function placeRabbitRandomly() {
             const r = document.getElementById('desktop-rabbit');
-            // Safe zone calculation (padding from edges)
-            const x = Math.floor(Math.random() * (window.innerWidth - 100)) + 20;
-            const y = Math.floor(Math.random() * (window.innerHeight - 200)) + 100; // Avoid top icons
+
+            // Calculate safe bounds (accounting for padding and icon size)
+            // Use 80px buffer from edges
+            const buffer = 80;
+            const maxWidth = window.innerWidth - buffer;
+            const maxHeight = window.innerHeight - buffer;
+
+            const x = Math.floor(Math.random() * (maxWidth - buffer)) + buffer;
+            const y = Math.floor(Math.random() * (maxHeight - buffer)) + buffer;
 
             r.style.left = x + 'px';
             r.style.top = y + 'px';
@@ -643,7 +683,7 @@
         // --- GLITCH EFFECT ---
         function maybeGlitch() {
             // Random chance to glitch screen on click
-            if (Math.random() > 0.7) {
+            if (Math.random() > 0.8) {
                 document.body.classList.add('glitch-active');
                 setTimeout(() => document.body.classList.remove('glitch-active'), 200);
             }
